@@ -1,7 +1,13 @@
+export enum AppMode {
+  TIME_TRAVEL = 'TIME_TRAVEL',
+  MAGIC_EDIT = 'MAGIC_EDIT',
+  ANALYZE = 'ANALYZE'
+}
+
 export enum AppState {
   LANDING = 'LANDING',
   CAPTURE = 'CAPTURE',
-  SELECT_ERA = 'SELECT_ERA',
+  CONFIG = 'CONFIG',
   PROCESSING = 'PROCESSING',
   RESULT = 'RESULT',
   ERROR = 'ERROR'
@@ -17,8 +23,9 @@ export interface HistoricalEra {
 }
 
 export interface GeneratedResult {
-  imageUrl: string;
+  imageUrl?: string;
+  text?: string;
   backstory?: string;
 }
 
-export type ProcessingStatus = 'initializing' | 'uploading' | 'generating_image' | 'analyzing_history' | 'complete';
+export type ProcessingStatus = 'initializing' | 'uploading' | 'generating_image' | 'analyzing_history' | 'analyzing_image' | 'complete';

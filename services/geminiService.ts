@@ -73,7 +73,7 @@ export const travelThroughTime = async (
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image', // Using the "Nano banana" equivalent as requested for editing
+      model: 'gemini-2.5-flash-image',
       contents: {
         parts: [
           {
@@ -89,8 +89,6 @@ export const travelThroughTime = async (
       }
     });
 
-    // Extract image from response
-    // The model might return text and image, we need to find the image part.
     if (response.candidates && response.candidates[0].content.parts) {
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData && part.inlineData.data) {
@@ -107,6 +105,81 @@ export const travelThroughTime = async (
 };
 
 /**
+ * Uses Gemini 2.5 Flash Image to edit images based on natural language instructions.
+ */
+export const editImage = async (
+  originalImageBase64: string,
+  instruction: string
+): Promise<string> => {
+  try {
+    const cleanBase64 = await prepareImageForApi(originalImageBase64);
+    
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: cleanBase64
+            }
+          },
+          {
+            text: instruction
+          }
+        ]
+      }
+    });
+
+    if (response.candidates && response.candidates[0].content.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:image/jpeg;base64,${part.inlineData.data}`;
+        }
+      }
+    }
+
+    throw new Error("No image generated in the response.");
+  } catch (error) {
+    console.error("Image editing failed:", error);
+    throw error;
+  }
+};
+
+/**
+ * Uses Gemini 3 Pro Preview to analyze the image content.
+ */
+export const analyzeImage = async (
+  imageBase64: string
+): Promise<string> => {
+  try {
+    const cleanBase64 = await prepareImageForApi(imageBase64);
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: cleanBase64
+            }
+          },
+          {
+            text: "Please analyze this image in detail. Describe the subject, setting, lighting, and any notable features. Provide the response in Simplified Chinese."
+          }
+        ]
+      }
+    });
+
+    return response.text || "无法分析该图片。";
+  } catch (error) {
+    console.error("Image analysis failed:", error);
+    return "分析过程中发生错误。";
+  }
+};
+
+/**
  * Uses Gemini 3 Pro Preview to analyze the generated image and create a backstory.
  */
 export const generateBackstory = async (
@@ -114,13 +187,12 @@ export const generateBackstory = async (
   eraName: string
 ): Promise<string> => {
   try {
-    // Strip data URL prefix if present
     const cleanBase64 = generatedImageBase64.includes(',') 
       ? generatedImageBase64.split(',')[1] 
       : generatedImageBase64;
 
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // High intelligence model for creative writing & analysis
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview', 
       contents: {
         parts: [
           {
@@ -133,15 +205,16 @@ export const generateBackstory = async (
             text: `Analyze this image which depicts a person in the ${eraName} era. 
             Based on their clothing, setting, and expression, invent a short, witty, and creative 
             historical backstory (max 3 sentences) for this character. 
-            Who were they? What was their profession or secret?`
+            Who were they? What was their profession or secret?
+            Please provide the response in Simplified Chinese.`
           }
         ]
       }
     });
 
-    return response.text || "A mysterious figure lost to the sands of time...";
+    return response.text || "一段被历史遗忘的故事...";
   } catch (error) {
     console.error("Backstory generation failed:", error);
-    return "The history books are silent on this one.";
+    return "历史记载对此一片空白。";
   }
 };
