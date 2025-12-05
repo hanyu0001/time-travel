@@ -1,0 +1,7 @@
+{
+  "name": "ChronoSnap: Time Travel Booth",
+  "description": "Travel through time with your selfies using generative AI. Insert yourself into historical eras and discover your past life.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
